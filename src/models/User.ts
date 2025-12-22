@@ -11,9 +11,18 @@ export interface IUser extends Document {
   role: "USER" | "ADMIN" | "DELIVERY";
   provider: "credentials" | "google";
   isVerified: boolean;
-  comparePassword(candidatePassword: string): Promise<boolean>;
+  location?: {
+    type: {
+        type: StringConstructor;
+        enum: string[];
+        default: string;
+    };
+    coordinates: {
+        type: NumberConstructor[];
+        default: number[];
+    };
+  };
 }
-
 const UserSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true },
@@ -41,9 +50,23 @@ const UserSchema: Schema<IUser> = new Schema(
       type: Boolean,
       default: false,
     },
+    location: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0]
+      }
+    }
   },
   { timestamps: true }
 );
+
+UserSchema.index({ location: "2dsphere" });
+
 
 // Hash password before saving
 UserSchema.pre<IUser>("save", async function () {
@@ -51,11 +74,7 @@ UserSchema.pre<IUser>("save", async function () {
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-// Compare password
-UserSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  if (!this.password) return false;
-  return await bcrypt.compare(candidatePassword, this.password);
-};
+
 
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
