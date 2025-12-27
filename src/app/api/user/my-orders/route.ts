@@ -17,7 +17,7 @@ export async function GET() {
 
     const orders = await Order.find({
       userId: session.user.id,
-    }).populate("userId");
+    }).populate("userId assignDeliveryBoy").sort({ createdAt: -1 });
 
     return NextResponse.json(orders, {
       status: 200,

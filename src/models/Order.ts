@@ -23,13 +23,18 @@ export interface IOrder{
         state:string,
         pincode:string,
         address:string,
-        latitude?:string,
-        longitude?:string
+        latitude?: number;
+        longitude?: number;
+
     },
     assignment?:mongoose.Types.ObjectId,
     assignDeliveryBoy?:mongoose.Types.ObjectId,
     createdAt?:Date,
-    updatedAt?:Date  
+    updatedAt?:Date,
+    deliveryOtp:string | null,
+    deliveryOtpVerification:boolean,
+    deliveredAt?:Date
+
 }
 const OrderSchema = new mongoose.Schema<IOrder>({
     userId:{
@@ -118,8 +123,20 @@ const OrderSchema = new mongoose.Schema<IOrder>({
             type:String
               
         },
-        latitude:String,
-        longitude:String
+        latitude: Number,
+        longitude: Number
+
+    },
+    deliveryOtp:{
+        type:String,
+        default:null
+    },
+    deliveryOtpVerification:{
+        type:Boolean,
+        default:false
+    },
+    deliveredAt:{
+        type:Date
     }
 },{timestamps:true});
 

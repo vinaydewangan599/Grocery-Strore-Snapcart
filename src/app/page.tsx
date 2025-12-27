@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import UserDashboard from "@/components/UserDashboard";
 import AdminDashboard from "@/components/AdminDashboard";
 import DeliveryBoy from "@/components/DeliveryBoy";
+import GeoUpdater from "@/components/GeoUpdater";
 
 const Home = async () => {
   await dbConnect();
@@ -28,6 +29,7 @@ const Home = async () => {
   return (
     <>
       <Navbar user={planUser} />
+      <GeoUpdater userId={planUser._id} />
       {user.role == "USER" ? (
         <UserDashboard />
       ) : user.role == "ADMIN" ? (

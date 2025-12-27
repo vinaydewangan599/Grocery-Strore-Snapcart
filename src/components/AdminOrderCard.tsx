@@ -1,13 +1,82 @@
 "use client";
-import React, { useState } from "react";
-import { IOrder } from "@/models/Order";
+import React, { useEffect, useState } from "react";
+
 import { motion } from "motion/react";
 import { Package, MapPin, ChevronUp, ChevronDown, Truck,User,Phone, CreditCard } from "lucide-react";
 import Image from "next/image";
+import axios from "axios";
+import { error } from "console";
+import { set } from "mongoose";
+import mongoose from "mongoose";
+import type { IUser } from "@/models/User";
+import { UserCheck } from "lucide-react";
+
+interface IOrder{
+    _id?:mongoose.Types.ObjectId,
+    userId:mongoose.Types.ObjectId,
+    items:[
+        {
+            groceryId:mongoose.Types.ObjectId,
+            name:string,
+            quantity:number,
+            price:number,
+            unit:string,
+            image:string 
+        }
+    ],
+    totalAmount:number,  
+    paymentMethod:"cod" | "online",
+    orderStatus:"pending" | "Out of Delivery"  | "delivered" | "cancelled",
+    isPaid:boolean,
+    deliveryAddress:{
+        name:string,
+        mobile:string,
+        city:string,
+        state:string,
+        pincode:string,
+        address:string,
+        latitude?: number;
+        longitude?: number;
+
+    },
+    assignment?:mongoose.Types.ObjectId,
+    assignDeliveryBoy?:IUser,
+    createdAt?:Date,
+    updatedAt?:Date  
+}
 
 const AdminOrderCard = ({ order }: { order: IOrder }) => {
-  const statusOptions = ["pending", "out of delivery"];
-    const [expanded, setExpanded] = useState(false);
+  
+
+  const [expanded, setExpanded] = useState(false);
+  const [status, setStatus] = useState<string>("pending");
+
+  useEffect(() => {
+    setStatus(order.orderStatus);
+  }, [order.orderStatus]);
+
+  const statusOptions = [
+    "pending",
+    "Out of Delivery"
+  ];
+
+const updateStatus = async (orderId: string, status: string) => {
+  try {
+    const result = await axios.post(
+      `/api/admin/update-order-status/${orderId}`,
+      { status }
+    );
+
+    console.log(result.data);
+    setStatus(status);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+
+
+
   return (
     <motion.div
       key={order._id?.toString()}
@@ -53,19 +122,55 @@ const AdminOrderCard = ({ order }: { order: IOrder }) => {
               <CreditCard size={16} className="text-green-600" />
               <span>{order.paymentMethod=="cod"?"cash on Delivery":"online payment"}</span>
             </p>
+
+            {order.assignDeliveryBoy && (
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+                
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <UserCheck className="text-blue-600" size={18} />
+
+                  <div className="font-semibold text-gray-800">
+                    <p>
+                      Assigned to :{" "}
+                      <span className="font-bold">
+                        {order.assignDeliveryBoy.name}
+                      </span>
+                    </p>
+
+                    {order.assignDeliveryBoy.mobile && (
+                      <p className="text-xs text-gray-600">
+                        📞 +91 {order.assignDeliveryBoy.mobile}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {order.assignDeliveryBoy.mobile && (
+                  <a
+                    href={`tel:+91${order.assignDeliveryBoy.mobile}`}
+                    className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Call
+                  </a>
+                )}
+              </div>
+            )}
+
+
         </div>
 
         <div className='flex flex-col items-start md:items-end gap-2'>
             <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${
-                order.orderStatus === "delivered"
+                status === "delivered"
                 ? "bg-green-100 text-green-700"
-                : order.orderStatus === "pending"
+                : status === "pending"
                 ? "bg-yellow-100 text-yellow-700"
                 : "bg-blue-100 text-blue-700"
             }`}>
-                {order.orderStatus}
+                {status}
             </span>
-            <select className='border border-gray-300 rounded-lg px-3 py-1 text-sm shadow-sm hover:border-green-400 transition focus:ring-2 focus:ring-green-500 outline-none'>
+            <select className='border border-gray-300 rounded-lg px-3 py-1 text-sm shadow-sm hover:border-green-400 transition focus:ring-2 focus:ring-green-500 outline-none'
+            onChange={(e)=>updateStatus(order._id?.toString()!,e.target.value)} value={status}>
                 {statusOptions.map(st => (
                 <option key={st} value={st}>{st.toUpperCase()}</option>
                 ))}
@@ -131,7 +236,7 @@ const AdminOrderCard = ({ order }: { order: IOrder }) => {
         <div className='border-t mt-3 pt-3 flex justify-between items-center text-sm font-semibold text-gray-800'>
                 <div className='flex items-center gap-2 text-gray-700 text-sm'>
                     <Truck size={16} className="text-green-600"/>
-                    <span>Delivery: <span className='text-green-700 font-semibold'>{order.orderStatus}</span></span>
+                    <span>Delivery: <span className='text-green-700 font-semibold'>{status}</span></span>
                 </div>
                 <div>
                     Total: <span className='text-green-700 font-bold'>₹{order.totalAmount}</span>

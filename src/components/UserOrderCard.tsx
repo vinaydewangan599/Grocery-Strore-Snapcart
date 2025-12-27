@@ -1,5 +1,5 @@
 "use client";
-import { IOrder } from "@/models/Order";
+
 import { motion } from "motion/react";
 import {
   CreditCard,
@@ -9,11 +9,56 @@ import {
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { s } from "motion/react-client";
+import { getSocket } from "@/lib/socket";
+import { UserCheck } from "lucide-react";
+import mongoose from "mongoose";
+import type { IUser } from "@/models/User";
+import { useRouter } from "next/navigation";
+
+
+interface IOrder{
+    _id?:mongoose.Types.ObjectId,
+    userId:mongoose.Types.ObjectId,
+    items:[
+        {
+            groceryId:mongoose.Types.ObjectId,
+            name:string,
+            quantity:number,
+            price:number,
+            unit:string,
+            image:string 
+        }
+    ],
+    totalAmount:number,  
+    paymentMethod:"cod" | "online",
+    orderStatus:"pending" | "Out of Delivery"  | "delivered" | "cancelled",
+    isPaid:boolean,
+    deliveryAddress:{
+        name:string,
+        mobile:string,
+        city:string,
+        state:string,
+        pincode:string,
+        address:string,
+        latitude?: number;
+        longitude?: number;
+
+    },
+    assignment?:mongoose.Types.ObjectId,
+    assignDeliveryBoy?:IUser,
+    createdAt?:Date,
+    updatedAt?:Date  
+}
+
 
 const UserOrderCard = ({ order }: { order: IOrder }) => {
   const [expanded, setExpanded] = useState(false);
+  const [status, setStatus] = useState(order.orderStatus);
+
+  const router = useRouter();
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -26,6 +71,18 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         return "bg-gray-100 text-gray-600 border-gray-300";
     }
   };
+  useEffect((): any => {
+  const socket = getSocket()
+  socket.on("order-status-update", (data) => {
+    if (data.orderId.toString() == order?._id!.toString()) {
+      setStatus(data.status)
+    }
+  })
+
+  return () => socket.off("order-status-update")
+}, [])
+
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -62,13 +119,15 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
 
           <span
             className={`px-3 py-1 text-xs font-semibold border rounded-full ${getStatusColor(
-              order.orderStatus
+              status
             )}`}
           >
-            {order.orderStatus}
+            {status}
           </span>
         </div>
       </div>
+      
+           
       <div className="p-5 space-y-4">
         {order.paymentMethod == "cod" ? (
           <div className="flex items-center gap-2 text-gray-700 text-sm">
@@ -81,6 +140,42 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
             Online Payment
           </div>
         )}
+         {order.assignDeliveryBoy && (
+              <>
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+                
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                  <UserCheck className="text-blue-600" size={18} />
+
+                  <div className="font-semibold text-gray-800">
+                    <p>
+                      Assigned to :{" "}
+                      <span className="font-bold">
+                        {order.assignDeliveryBoy.name}
+                      </span>
+                    </p>
+
+                    {order.assignDeliveryBoy.mobile && (
+                      <p className="text-xs text-gray-600">
+                        📞 +91 {order.assignDeliveryBoy.mobile}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {order.assignDeliveryBoy.mobile && (
+                  <a
+                    href={`tel:+91${order.assignDeliveryBoy.mobile}`}
+                    className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Call
+                  </a>
+                )}
+              </div>
+              <button className='w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold px-4 py-2 rounded-xl shadow hover:bg-green-700 transition' onClick={()=>router.push(`/user/track-order/${order._id?.toString()}`)}><Truck size={18}/> Track Your Order</button>
+              </>
+            )}
+
         <div className="flex items-center gap-2 text-gray-700 text-sm">
           <MapPin size={16} className="text-green-600" />
           <span className="truncate">{order.deliveryAddress.address}</span>
@@ -142,7 +237,7 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         <div className='border-t pt-3 flex justify-between items-center text-sm font-semibold text-gray-800'>
         <div className='flex items-center gap-2 text-gray-700 text-sm'>
             <Truck size={16} className="text-green-600"/>
-            <span>Delivery: <span className='text-green-700 font-semibold'>{order.orderStatus}</span></span>
+            <span>Delivery: <span className='text-green-700 font-semibold'>{status}</span></span>
         </div>
         <div>
             Total: <span className='text-green-700 font-bold'>₹{order.totalAmount}</span>

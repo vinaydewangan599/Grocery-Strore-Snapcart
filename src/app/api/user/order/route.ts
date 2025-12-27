@@ -2,6 +2,7 @@ import dbConnect from "@/lib/db";
 import User from "@/models/User";
 import Order from "@/models/Order";
 import { NextRequest, NextResponse } from "next/server";
+import emitEventHandler from "@/lib/emitEventHandler";
 
 export async function POST(req: NextRequest) {
   try {
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest) {
       totalAmount,
       deliveryAddress,
     });
+
+    await emitEventHandler("new-order", newOrder);
+
 
     return NextResponse.json(
       { message: "Order placed successfully", order: newOrder },

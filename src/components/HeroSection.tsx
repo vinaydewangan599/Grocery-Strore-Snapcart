@@ -1,13 +1,17 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { use, useEffect } from "react";
 import { Leaf, Truck, Smartphone, ShoppingBasket } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 
+
 const HeroSection = () => {
+ 
   const {userData} = useSelector((state:RootState) => state.user);
+  
+
   console.log("User Data in HeroSection:", userData);
   const slides = [
     {

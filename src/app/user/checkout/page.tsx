@@ -450,7 +450,7 @@
 // export default Checkout;
 
 
-"use client";
+'use client'
 import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import {
@@ -668,8 +668,11 @@ const handleCod = async () => {
         state: address.state,
         pincode: address.pincode,
         address: address.fullAddress, // ✅ FIXED
-        latitude: position?.lat?.toString(),
-        longitude: position?.lng?.toString(),
+        // latitude: position?.lat?.toString(),
+        // longitude: position?.lng?.toString(),
+        latitude: position ? position.lat.toString() : "",
+        longitude: position ? position.lng.toString() : "",
+
       },
 
       paymentMethod: "cod",
