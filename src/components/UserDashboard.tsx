@@ -2,13 +2,13 @@ import React from "react";
 import HeroSection from "./HeroSection";
 import CategorySlider from "./CategorySlider";
 import dbConnect from "@/lib/db";
-import Grocery from "@/models/Grocery";
+import Grocery, { IGrocery } from "@/models/Grocery";
 import GroceryItemCard from "./GroceryItemCard";
 
-const UserDashboard = async () => {
+const UserDashboard = async ({groceryList}:{groceryList:IGrocery[]}) => {
   await dbConnect();
-  const groceries = await Grocery.find({});
-  const plainGroceries = JSON.parse(JSON.stringify(groceries));
+  // const groceries = await Grocery.find({});
+   const plainGroceries = JSON.parse(JSON.stringify(groceryList));
 
   return (
     <>

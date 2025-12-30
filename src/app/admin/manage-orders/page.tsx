@@ -65,7 +65,15 @@ const ManageOrders = () => {
   socket?.on("new-order",(newOrder)=>{
     setOrders((prev)=>[newOrder,...prev!])
   })
-  return ()=>socket.off("new-order")
+  socket.on("order-assigned", ({orderId, assignDeliveryBoy}) => {
+    setOrders((prev) => prev?.map((o) => (
+        o._id?.toString() === orderId?.toString() ? { ...o, assignDeliveryBoy } : o
+    )))
+})
+  return ()=>{
+    socket.off("order-assigned");
+    socket.off("new-order")
+  }
 },[])
 
 
@@ -88,7 +96,8 @@ const ManageOrders = () => {
         {/* Order List Mapping */}
         <div className='space-y-6'>
             {orders?.map((order, index) => (
-            <AdminOrderCard order={order} key={index} />
+            <AdminOrderCard order={order} key={order._id?.toString()}
+ />
             ))}
         </div>
       </div>

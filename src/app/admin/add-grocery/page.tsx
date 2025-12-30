@@ -124,8 +124,8 @@ const AddGrocery = () => {
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-green-400 transition-all *:bg-white"
               >
                 <option value="">Select Category</option>
-                {categories.map((cat) => (
-                  <option key={cat} value={cat}>
+                {categories.map((cat,i) => (
+                  <option key={i} value={cat}>
                     {cat}
                   </option>
                 ))}

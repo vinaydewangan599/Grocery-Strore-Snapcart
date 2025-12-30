@@ -1,6 +1,6 @@
 "use client"; // This component will run on the client (not the server)
 
-import React, { use, useRef } from "react";
+import React, { use, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Search,
@@ -21,6 +21,8 @@ import { useEffect } from "react";
 import { createPortal } from "react-dom"; // Used to render sidebar outside normal DOM hierarchy
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store"; // RootState type for Redux store
+import { useRouter } from "next/navigation";
+
 
 // User interface type
 interface IUser {
@@ -59,6 +61,12 @@ const Navbar = ({ user }: { user: IUser }) => {
   //cart count from redux store
   const { cartData } = useSelector((state: RootState) => state.cart);
 
+  //search
+  const [search, setSearch] = useState("");
+
+  //create router
+  const router = useRouter();
+
   // Close dropdown when user clicks outside element
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -84,6 +92,17 @@ const Navbar = ({ user }: { user: IUser }) => {
     // Cleanup listener on component unmount
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = search.trim();
+    if(!query) return router.push("/");
+
+    router.push(`/?q=${encodeURIComponent(query)}`);
+    setSearch("");
+
+
+  }
 
   // Sidebar for mobile view (Admin menu)
   const sideBar = menuOpen
@@ -149,7 +168,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                 <PlusCircle className="w-5 h-5" /> Add Grocery
               </Link>
               <Link
-                href={""}
+                href={"/admin/view-grocery"}
                 className="flex items-center gap-3 p-3 rounded-lg bg-white/10 hover:bg-white/20 hover:pl-4 transition-all"
               >
                 <Boxes className="w-5 h-5" /> view Grocery
@@ -199,11 +218,14 @@ const Navbar = ({ user }: { user: IUser }) => {
         <form
           className="hidden md:flex items-center bg-white rounded-full px-4 py-2 w-1/2 max-w-lg
         shadow-md"
+        onSubmit={handleSearch}
         >
           <Search className="text-gray-500 w-5 h-5 mr-2" />
           <input
             type="text"
             placeholder="Search groceries..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full outline-none text-gray-700 placeholder-gray-400"
           />
         </form>
@@ -250,7 +272,7 @@ const Navbar = ({ user }: { user: IUser }) => {
                 <PlusCircle className="w-5 h-5" /> Add Grocery
               </Link>
               <Link
-                href={""}
+                href={"/admin/view-grocery"}
                 className="flex items-center gap-2 bg-white text-green-700 font-semibold px-4 py-2 rounded-full hover:bg-green-100 transition-all"
               >
                 <Boxes className="w-5 h-5" /> view Grocery
@@ -370,11 +392,13 @@ const Navbar = ({ user }: { user: IUser }) => {
                 className="fixed top-24 left-1/2 -translate-x-1/2 w-[90%] bg-white rounded-full shadow-lg z-40 flex items-center px-4 py-2"
               >
                 <Search className="text-gray-500 w-5 h-5 mr-2" />
-                <form className="grow">
+                <form className="grow" onSubmit={handleSearch}>
                   <input
                     type="text"
                     className="w-full outline-none text-gray-700"
                     placeholder="search groceries..."
+                     value={search}
+                      onChange={(e) => setSearch(e.target.value)}
                   />
                 </form>
                 <button onClick={() => setSearchBarOpen(false)}>

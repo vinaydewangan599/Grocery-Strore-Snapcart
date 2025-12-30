@@ -2,6 +2,7 @@ import dbConnect from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import Order from "@/models/Order";
 import DeliveryAssignment from "@/models/DeliveryAssignment";
+import emitEventHandler from "@/lib/emitEventHandler";
 
 export async function POST(req: NextRequest) {
     try {
@@ -32,7 +33,15 @@ export async function POST(req: NextRequest) {
         order.deliveryOtpVerification=true
         order.deliveredAt=new Date()
         await order.save()
-
+             
+        await emitEventHandler(
+          'order-status-update',   // ✅ lowercase s
+          {
+            orderId: order._id,
+            status: order.orderStatus,
+          }
+        );
+        
         await DeliveryAssignment.updateOne(
             {orderId:orderId},
             {$set:{assignedTo:null,status:"completed"}}

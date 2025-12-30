@@ -4,6 +4,7 @@ import DeliveryAssignment from "@/models/DeliveryAssignment";
 import Order from "@/models/Order";
 import mongoose from "mongoose";
 import { auth } from "@/auth";
+import emitEventHandler from "@/lib/emitEventHandler";
 
 export async function POST(
   req: NextRequest,
@@ -85,12 +86,17 @@ export async function POST(
       order?.assignDeliveryBoy
     );
 
+
     if (!order) {
       return NextResponse.json(
         { message: "Order not found" },
         { status: 400 }
       );
     }
+
+    await order.populate("assignDeliveryBoy");
+    await emitEventHandler("order-assigned", {orderId:order._id ,assignDeliveryBoy: order.assignDeliveryBoy});
+
 
     await DeliveryAssignment.updateMany(
       {

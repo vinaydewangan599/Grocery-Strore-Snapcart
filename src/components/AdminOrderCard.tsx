@@ -10,6 +10,7 @@ import { set } from "mongoose";
 import mongoose from "mongoose";
 import type { IUser } from "@/models/User";
 import { UserCheck } from "lucide-react";
+import { getSocket } from "@/lib/socket";
 
 interface IOrder{
     _id?:mongoose.Types.ObjectId,
@@ -60,6 +61,7 @@ const AdminOrderCard = ({ order }: { order: IOrder }) => {
     "Out of Delivery"
   ];
 
+
 const updateStatus = async (orderId: string, status: string) => {
   try {
     const result = await axios.post(
@@ -73,6 +75,16 @@ const updateStatus = async (orderId: string, status: string) => {
     console.error(error);
   }
 };
+  useEffect((): any => {
+  const socket = getSocket()
+  socket.on("order-status-update", (data) => {
+    if (data.orderId.toString() == order?._id!.toString()) {
+      setStatus(data.status)
+    } 
+  })
+
+  return () => socket.off("order-status-update")
+}, [])
 
 
 
@@ -91,7 +103,7 @@ const updateStatus = async (orderId: string, status: string) => {
             <Package size={20} />
             Order #{order._id?.toString().slice(-6)}
           </p>
-          <span
+          {status !== "delivered" && <span
             className={`inline-block text-xs font-semibold px-3 py-1 rounded-full border ${
               order.isPaid
                 ? "bg-green-100 text-green-700 border-green-300"
@@ -99,7 +111,8 @@ const updateStatus = async (orderId: string, status: string) => {
             }`}
           >
             {order.isPaid ? "Paid" : "Unpaid"}
-          </span>
+          </span> }
+          
           <p className="text-gray-500 text-sm">
             {new Date(order.createdAt!).toDateString()}
           </p>
@@ -169,12 +182,15 @@ const updateStatus = async (orderId: string, status: string) => {
             }`}>
                 {status}
             </span>
-            <select className='border border-gray-300 rounded-lg px-3 py-1 text-sm shadow-sm hover:border-green-400 transition focus:ring-2 focus:ring-green-500 outline-none'
+            {status !== "delivered" && (
+               <select className='border border-gray-300 rounded-lg px-3 py-1 text-sm shadow-sm hover:border-green-400 transition focus:ring-2 focus:ring-green-500 outline-none'
             onChange={(e)=>updateStatus(order._id?.toString()!,e.target.value)} value={status}>
                 {statusOptions.map(st => (
                 <option key={st} value={st}>{st.toUpperCase()}</option>
                 ))}
             </select>
+            )}
+           
         </div>
 
       </div> 

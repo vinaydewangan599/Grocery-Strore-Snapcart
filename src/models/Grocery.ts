@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface IGrocery extends Document{
+export interface IGrocery extends Document{
     
     name:string,
     category:string,

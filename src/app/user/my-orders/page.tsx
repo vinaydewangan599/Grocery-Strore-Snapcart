@@ -3,9 +3,46 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, PackageSearch } from "lucide-react";
 import axios from "axios";
-import { IOrder } from "@/models/Order";
+
 import { motion } from "motion/react";
 import UserOrderCard from "@/components/UserOrderCard";
+import mongoose from "mongoose";
+import { IUser } from "@/models/User";
+import { getSocket } from "@/lib/socket";
+
+interface IOrder{
+    _id?:mongoose.Types.ObjectId,
+    userId:mongoose.Types.ObjectId,
+    items:[
+        {
+            groceryId:mongoose.Types.ObjectId,
+            name:string,
+            quantity:number,
+            price:number,
+            unit:string,
+            image:string 
+        }
+    ],
+    totalAmount:number,  
+    paymentMethod:"cod" | "online",
+    orderStatus:"pending" | "Out of Delivery"  | "delivered" | "cancelled",
+    isPaid:boolean,
+    deliveryAddress:{
+        name:string,
+        mobile:string,
+        city:string,
+        state:string,
+        pincode:string,
+        address:string,
+        latitude?: number;
+        longitude?: number;
+
+    },
+    assignment?:mongoose.Types.ObjectId,
+    assignDeliveryBoy?:IUser,
+    createdAt?:Date,
+    updatedAt?:Date  
+}
 
 const MyOrders = () => {
   const router = useRouter();
@@ -25,6 +62,30 @@ const MyOrders = () => {
     getMyOrders();
   }, []);
 
+  // Move this BEFORE the early return
+  useEffect(() => {
+    const socket = getSocket();
+    socket.on("order-assigned", ({orderId, assignDeliveryBoy}) => {
+      setOrders((prev) => prev?.map((o) => (
+        o._id == orderId ? {...o, assignDeliveryBoy} : o
+      )))
+    })
+
+    return () => {socket.off("order-assigned")}
+  }, [])
+
+  useEffect(() => {
+    const socket = getSocket()
+    socket.on("order-assigned", ({orderId, assignedDeliveryBoy}) => {
+        setOrders((prev) => prev?.map((o) => (
+            o._id == orderId ? {...o, assignedDeliveryBoy} : o
+        )))
+    })
+
+    return () => {socket.off("order-assigned")}
+}, [])
+
+  // NOW the early return is fine
   if (loading) {
     return (
       <div
@@ -83,3 +144,4 @@ const MyOrders = () => {
 };
 
 export default MyOrders;
+

@@ -76,7 +76,7 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
   socket.on("order-status-update", (data) => {
     if (data.orderId.toString() == order?._id!.toString()) {
       setStatus(data.status)
-    }
+    } 
   })
 
   return () => socket.off("order-status-update")
@@ -107,7 +107,8 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span
+          {status !== "delivered" && 
+             <span
             className={`px-3 py-1 text-xs font-semibold rounded-full border ${
               order.isPaid
                 ? "bg-green-100 text-green-700 border-green-300"
@@ -116,6 +117,8 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
           >
             {order.isPaid ? "Paid" : "Unpaid"}
           </span>
+          }
+         
 
           <span
             className={`px-3 py-1 text-xs font-semibold border rounded-full ${getStatusColor(
@@ -127,7 +130,7 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         </div>
       </div>
       
-           
+    
       <div className="p-5 space-y-4">
         {order.paymentMethod == "cod" ? (
           <div className="flex items-center gap-2 text-gray-700 text-sm">
@@ -140,7 +143,7 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
             Online Payment
           </div>
         )}
-         {order.assignDeliveryBoy && (
+         {status != "delivered" && order.assignDeliveryBoy && (
               <>
               <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
                 
@@ -244,7 +247,8 @@ const UserOrderCard = ({ order }: { order: IOrder }) => {
         </div>
         </div>
 
-      </div>
+      </div>   
+     
     </motion.div>
   );
 };
